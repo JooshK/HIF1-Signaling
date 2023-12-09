@@ -28,6 +28,8 @@ def define_species():
 
     return HIFa,HIFa_pOH,HIFa_aOH,HIFa_aOHpOH,HIFan_pOH,HIFan,HIFd,HIFd_HRE,HIFan_aOH,HIFan_aOHpOH,PHD,PHD_n,HIFb,HRE,mRNA,protein,luciferase
 
+def reaction_rates():
+    v_1 = 
 
 def nguyen_model(parameter_values=None):
     """
@@ -39,3 +41,8 @@ def nguyen_model(parameter_values=None):
     # define the model species:
     species = list(define_species())
     model.add_species(species)
+
+    
+
+
+
