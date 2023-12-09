@@ -40,12 +40,5 @@ def params(parameter_values=None):
     fih_n = gillespy2.Parameter(name='fih_n', expression=40)
     vhl = gillespy2.Parameter(name='vhl', expression=50)
     vhl_n = gillespy2.Parameter(name='vhl_n', expression=50)
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+    return k_1,k_2,k_3,k_m_3a,k_m_3b,k_4,k_m_4,k_5,k_m_5a,k_m_5b,k_6,k_7,k_8,k_9,k_10,k_11,k_12,k_13,k_14,k_21_f,k_21_r,k_22_f,k_22_r,k_23,k_24,k_25,k_26,k_27,k_28,k_29,o_2,fih,fih_n,vhl,vhl_n
