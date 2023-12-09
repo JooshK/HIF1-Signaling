@@ -40,10 +40,10 @@ class Params:
     vhl_n = 50
 
     def hypo_3(self, t, t_start):
-        return 100 * (1 - 18/21*np.heaviside(t - t_start))
+        return 100 * (1 - 18/21*np.heaviside(t-t_start, 1))
 
     def hypo_1(self, t, t_start):
-        return 100 * (1 - 20/21*np.heaviside(t - t_start))
+        return 100 * (1 - 20/21*np.heaviside(t-t_start, 1))
 
     def v1(self):
         return self.k_1
@@ -81,19 +81,67 @@ class Params:
     def v11(self, PHD):
         return self.k_11*PHD
     
-    def v_12(self, PHD_n):
+    def v12(self, PHD_n):
         return self.k_12*PHD_n
     
-    def v_13(self, HIFa_aOH):
+    def v13(self, HIFa_aOH):
         return self.k_13*HIFa_aOH
     
-    def v_14(self, HIFan_aOH):
+    def v14(self, HIFan_aOH):
         return self.k_14*HIFan_aOH
     
+    def v15(self, t, t_start, hypo, PHD_n, HIFa_n):
+        o2 = hypo(t, t_start)
+        return self.k_m_3a*PHD_n*o2/(self.k_m_3a+o2)*HIFa_n/(self.k_m_3a+HIFa_n)
+
+    def v16(self, HIFa_n_pOH):
+        return self.k_4*self.vhl_n*HIFa_n_pOH/(self.k_m_4+HIFa_n_pOH)
+    
+    def v17(self, t, t_start, hypo, HIFa_n):
+        o2 = hypo(t,t_start)
+        return self.k_5*self.fih_n*o2/(self.k_m_5a+o2)*HIFa_n/(self.k_m_5b+HIFa_n)
+    
+    def v18(self, HIFa_n_aOH):
+        return self.k_6*HIFa_n_aOH
+    
+    def v19(self, t, t_start, hypo, PHD_n, HIFa_n_aOH):
+        o2 = hypo(t, t_start)
+        return self.k_7*PHD_n*o2/(self.k_m_3a+o2)*HIFa_n_aOH/(self.k_m_3b+HIFa_n_aOH)
+    
+    def v20(self, HIFa_n_aOHpOH):
+        return self.k_8*self.vhl_n*HIFa_n_aOHpOH/(self.k_m_4+HIFa_n_aOHpOH)
+
+    def v21(self, HIFa_n,HIFb_k21r,HIFd):
+        return self.k_21_f*HIFa_n*HIFb_k21r*HIFd
+
+    def v22(self,HIFd, HRE_k22r,HIFd_HRE):
+        return self.k_22_f*HIFd*HRE_k22r*HIFd_HRE
+
+    def v23(self, HIFd_HRE):
+        return self.k_23*HIFd_HRE
+
+    def v24(self, HIFd_HRE):
+        return self.k_24*HIFd_HRE
+
+    def v25(self, PHD):
+        return self.k_25*PHD
+
+    def v26(self, mRNA):
+        return self.k_26*mRNA
+
+    def v27(self, mRNA):
+        return self.k_27*mRNA
+
+    def v28(self, Protein):
+        return self.k_28*Protein
+
+    def v29(self, Protein):
+        return self.k_29*Protein    
 
 def nguyen_model(s, t, params: Params):
     """
-    Defines the system of ODES described by Nguyen et. al. 2013 
+    Defines the system of ODES described by Nguyen et. al. 2013
+    The model reactions are described in Table S3  
     s: The state vector of all the tracked quantites,
     t: time
     params: class of params containing reaction rates
@@ -102,11 +150,34 @@ def nguyen_model(s, t, params: Params):
     t_start = 0
     hypo = params.hypo_1
     model = [
-        -params.v1 - params.v2(HIFa) - params.v9(HIFa) + params.v10(HIFan) - params.v3(t, t_start, hypo, PHD, HIFa) - params.v5(t, t_start, hypo, HIFa) + params.v6(HIFa_aOH),
+        -params.v1() - params.v2(HIFa) - params.v9(HIFa) + params.v10(HIFan) - params.v3(t, t_start, hypo, PHD, HIFa) - params.v5(t, t_start, hypo, HIFa) + params.v6(HIFa_aOH),
         params.v3(t, t_start, hypo, PHD, HIFa) - params.v4(HIFa_pOH),
-        params.v5(t, 0, hypo, HIFa) - params.v6(HIFa_aOH) - params.v7(t, 0, hypo, PHD, HIFa_aOH) - params.v_13(HIFa_aOH) + params.v_14(HIFan_aOH),
-        params.v7(t, 0, hypo, PHD, HIFa_aOH) - params.v8(HIFa_aOHpOH) 
+        params.v5(t, 0, hypo, HIFa) - params.v6(HIFa_aOH) - params.v7(t, 0, hypo, PHD, HIFa_aOH) - params.v13(HIFa_aOH) + params.v14(HIFan_aOH),
+        params.v7(t, 0, hypo, PHD, HIFa_aOH) - params.v8(HIFa_aOHpOH),
+        params.v15(t, 0, hypo, PHDn, HIFan) - params.v16(HIFan_pOH),
+        params.v9(HIFa) - params.v10(HIFan) - params.v17(t, 0, hypo, HIFan) + params.v18(HIFan_aOH)-params.v15(t, 0, hypo, PHDn, HIFan)-params.v21(HIFan, HIFb, HIFd),
+        params.v21(HIFan, HIFb, HIFd) - params.v22(HIFd, HRE, HIFd_HRE),
+        params.v22(HIFd, HRE, HIFd_HRE),
+        params.v17(t, 0, hypo, HIFan) - params.v18(HIFan_aOH) - params.v19(t, 0, hypo, PHDn, HIFan_aOH),
+        params.v19(t, 0, hypo, PHDn, HIFan_aOH) - params.v20(HIFan_aOHpOH),
+        params.v24(HIFd_HRE) - params.v25(PHD) - params.v11(PHD) + params.v12(PHDn),
+        params.v11(PHD) - params.v12(PHDn),
+        -params.v21(HIFan, HIFb, HIFd),
+        -params.v22(HIFd, HRE, HIFd_HRE),
+        params.v23(HIFd_HRE) - params.v26(mRNA),
+        params.v27(mRNA) - params.v28(protein),
+        params.v29(protein) 
     ]
     return model
 
-def 
+def solve_model(stop_time, numpoints):
+    s0 = [5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 170, 50, 0, 0, 0]
+    t = [stop_time *float(i)/(numpoints - 1) for i in range(numpoints)]
+    p = Params()
+
+    sol = odeint(nguyen_model, s0, t, args=(p,))
+    return sol
+
+if __name__ == "__main__":
+    solve_model(100, 50)
+    
