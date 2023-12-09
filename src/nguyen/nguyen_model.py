@@ -1,7 +1,11 @@
 from scipy.integrate import odeint
 import numpy as np
+import matplotlib.pyplot as plt
 
-class Params:    
+class Params:
+    """
+    Class that holds r
+    """
     # define parameters
     k_1 = 0.005
     k_2 = 0.0002
@@ -147,19 +151,19 @@ def nguyen_model(s, t, params: Params):
     params: class of params containing reaction rates
     """
     HIFa, HIFa_pOH, HIFa_aOH, HIFa_aOHpOH, HIFan_pOH, HIFan, HIFd, HIFd_HRE, HIFan_aOH, HIFan_aOHpOH, PHD, PHDn, HIFb, HRE, mRNA, protein, luciferase = s
-    t_start = 0
-    hypo = params.hypo_1
+    t_start = 5
+    hypo = params.hypo_3
     model = [
         -params.v1() - params.v2(HIFa) - params.v9(HIFa) + params.v10(HIFan) - params.v3(t, t_start, hypo, PHD, HIFa) - params.v5(t, t_start, hypo, HIFa) + params.v6(HIFa_aOH),
         params.v3(t, t_start, hypo, PHD, HIFa) - params.v4(HIFa_pOH),
-        params.v5(t, 0, hypo, HIFa) - params.v6(HIFa_aOH) - params.v7(t, 0, hypo, PHD, HIFa_aOH) - params.v13(HIFa_aOH) + params.v14(HIFan_aOH),
-        params.v7(t, 0, hypo, PHD, HIFa_aOH) - params.v8(HIFa_aOHpOH),
-        params.v15(t, 0, hypo, PHDn, HIFan) - params.v16(HIFan_pOH),
-        params.v9(HIFa) - params.v10(HIFan) - params.v17(t, 0, hypo, HIFan) + params.v18(HIFan_aOH)-params.v15(t, 0, hypo, PHDn, HIFan)-params.v21(HIFan, HIFb, HIFd),
+        params.v5(t, t_start, hypo, HIFa) - params.v6(HIFa_aOH) - params.v7(t, t_start, hypo, PHD, HIFa_aOH) - params.v13(HIFa_aOH) + params.v14(HIFan_aOH),
+        params.v7(t, t_start, hypo, PHD, HIFa_aOH) - params.v8(HIFa_aOHpOH),
+        params.v15(t, t_start, hypo, PHDn, HIFan) - params.v16(HIFan_pOH),
+        params.v9(HIFa) - params.v10(HIFan) - params.v17(t, t_start, hypo, HIFan) + params.v18(HIFan_aOH)-params.v15(t, t_start, hypo, PHDn, HIFan)-params.v21(HIFan, HIFb, HIFd),
         params.v21(HIFan, HIFb, HIFd) - params.v22(HIFd, HRE, HIFd_HRE),
         params.v22(HIFd, HRE, HIFd_HRE),
-        params.v17(t, 0, hypo, HIFan) - params.v18(HIFan_aOH) - params.v19(t, 0, hypo, PHDn, HIFan_aOH),
-        params.v19(t, 0, hypo, PHDn, HIFan_aOH) - params.v20(HIFan_aOHpOH),
+        params.v17(t, t_start, hypo, HIFan) - params.v18(HIFan_aOH) - params.v19(t, t_start, hypo, PHDn, HIFan_aOH),
+        params.v19(t, t_start, hypo, PHDn, HIFan_aOH) - params.v20(HIFan_aOHpOH),
         params.v24(HIFd_HRE) - params.v25(PHD) - params.v11(PHD) + params.v12(PHDn),
         params.v11(PHD) - params.v12(PHDn),
         -params.v21(HIFan, HIFb, HIFd),
@@ -176,8 +180,11 @@ def solve_model(stop_time, numpoints):
     p = Params()
 
     sol = odeint(nguyen_model, s0, t, args=(p,))
-    return sol
+    return t, sol
 
 if __name__ == "__main__":
-    solve_model(100, 50)
+    t, solution = solve_model(100, 50)
+    with open('../../out/nguyen_model_1.dat', 'w') as f:
+        for t, state in zip(t, solution):
+            print(t, state,file=f)
     
