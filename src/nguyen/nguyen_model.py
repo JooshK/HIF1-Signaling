@@ -96,7 +96,7 @@ class Params:
     
     def v15(self, t, t_start, hypo, PHD_n, HIFa_n):
         o2 = hypo(t, t_start)
-        return self.k_m_3a*PHD_n*o2/(self.k_m_3a+o2)*HIFa_n/(self.k_m_3a+HIFa_n)
+        return self.k_3*PHD_n*o2/(self.k_m_3a+o2)*HIFa_n/(self.k_m_3b+HIFa_n)
 
     def v16(self, HIFa_n_pOH):
         return self.k_4*self.vhl_n*HIFa_n_pOH/(self.k_m_4+HIFa_n_pOH)
@@ -115,11 +115,11 @@ class Params:
     def v20(self, HIFa_n_aOHpOH):
         return self.k_8*self.vhl_n*HIFa_n_aOHpOH/(self.k_m_4+HIFa_n_aOHpOH)
 
-    def v21(self, HIFa_n,HIFb_k21r,HIFd):
-        return self.k_21_f*HIFa_n*HIFb_k21r*HIFd
+    def v21(self, HIFa_n, HIFb, HIFd):
+        return self.k_21_f*HIFa_n*HIFb-self.k_21_r*HIFd
 
-    def v22(self,HIFd, HRE_k22r,HIFd_HRE):
-        return self.k_22_f*HIFd*HRE_k22r*HIFd_HRE
+    def v22(self,HIFd, HRE, HIFd_HRE):
+        return self.k_22_f*HIFd*HRE-self.k_22_r*HIFd_HRE
 
     def v23(self, HIFd_HRE):
         return self.k_23*HIFd_HRE
@@ -182,7 +182,7 @@ def solve_model(stop_time, numpoints):
     sol = odeint(nguyen_model, s0, t, args=(p,))
     return t, sol
 
-t, solution = solve_model(100, 1000)
+t, solution = solve_model(10000, 10000)
 
 # assign time trajectories to each species
 HIFa = list()
@@ -210,6 +210,7 @@ for i in range(len(solution)):
         species[j].append(solution[i][j])
 
 fig1 = plt.figure(figsize=(10,6))
-plt.plot(t, HIFa)
-plt.xlim(0,10)
+plt.plot(t, luciferase)
+plt.xlim(0,10000)
+print(luciferase)
 plt.show()
