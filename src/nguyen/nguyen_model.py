@@ -1,6 +1,11 @@
 from scipy.integrate import odeint
 import numpy as np
 import matplotlib.pyplot as plt
+import basico
+
+def smooth_transition(t, t_start, steepness=0.09):
+    return 1 / (1 + np.exp(-steepness * (t - t_start)))
+
 
 class Params:
     """
@@ -42,6 +47,10 @@ class Params:
     fih_n = 40
     vhl = 50
     vhl_n = 50
+    
+    def hypo_3_smooth(self, t, t_start):
+        return 100 * (1 - 18/21 * smooth_transition(t, t_start))
+
 
     def hypo_3(self, t, t_start):
         return 100 * (1 - 18/21*np.heaviside(t-t_start, 1))
@@ -64,6 +73,7 @@ class Params:
 
     def v5(self, t, t_start, hypo, HIFa):
         o2 = hypo(t, t_start)
+        #o2 = 100
         return self.k_5 * self.fih * o2/(self.k_m_5a + o2) * HIFa/(self.k_m_5b + HIFa)
     
     def v6(self, HIFa_aOH):
@@ -71,12 +81,14 @@ class Params:
     
     def v7(self, t, t_start, hypo, PHD, HIFa_aOH):
         o2 = hypo(t, t_start)
+        #o2 = 100
         return self.k_7*PHD*o2/(self.k_m_3a + o2) * HIFa_aOH/(self.k_m_3b + HIFa_aOH)
     
     def v8(self, HIFa_aOHpOH):
         return self.k_8*self.vhl*HIFa_aOHpOH/(self.k_m_4 + HIFa_aOHpOH)
     
     def v9(self, HIFa):
+        
         return self.k_9*HIFa
     
     def v10(self, HIFa_n):
@@ -96,6 +108,7 @@ class Params:
     
     def v15(self, t, t_start, hypo, PHD_n, HIFa_n):
         o2 = hypo(t, t_start)
+        #o2 = 100
         return self.k_3*PHD_n*o2/(self.k_m_3a+o2)*HIFa_n/(self.k_m_3b+HIFa_n)
 
     def v16(self, HIFa_n_pOH):
@@ -103,6 +116,7 @@ class Params:
     
     def v17(self, t, t_start, hypo, HIFa_n):
         o2 = hypo(t,t_start)
+        #o2 = 100
         return self.k_5*self.fih_n*o2/(self.k_m_5a+o2)*HIFa_n/(self.k_m_5b+HIFa_n)
     
     def v18(self, HIFa_n_aOH):
@@ -110,6 +124,7 @@ class Params:
     
     def v19(self, t, t_start, hypo, PHD_n, HIFa_n_aOH):
         o2 = hypo(t, t_start)
+        #o2 = 100
         return self.k_7*PHD_n*o2/(self.k_m_3a+o2)*HIFa_n_aOH/(self.k_m_3b+HIFa_n_aOH)
     
     def v20(self, HIFa_n_aOHpOH):
@@ -151,8 +166,8 @@ def nguyen_model(s, t, params: Params):
     params: class of params containing reaction rates
     """
     HIFa, HIFa_pOH, HIFa_aOH, HIFa_aOHpOH, HIFan_pOH, HIFan, HIFd, HIFd_HRE, HIFan_aOH, HIFan_aOHpOH, PHD, PHDn, HIFb, HRE, mRNA, protein, luciferase = s
-    t_start = 5
-    hypo = params.hypo_1
+    t_start = 15
+    hypo = params.hypo_3
     model = [
         params.v1() - params.v2(HIFa) - params.v9(HIFa) + params.v10(HIFan) - params.v3(t, t_start, hypo, PHD, HIFa) - params.v5(t, t_start, hypo, HIFa) + params.v6(HIFa_aOH),
         params.v3(t, t_start, hypo, PHD, HIFa) - params.v4(HIFa_pOH),
@@ -176,8 +191,43 @@ def nguyen_model(s, t, params: Params):
 
 def solve_model(stop_time, numpoints):
     s0 = [5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 170, 50, 0, 0, 0]
-    t = [stop_time *float(i)/(numpoints - 1) for i in range(numpoints)]
+    t = np.linspace(0,stop_time,numpoints)
     p = Params()
 
     sol = odeint(nguyen_model, s0, t, args=(p,))
     return t, sol
+
+t, solution = solve_model(100, 100)
+
+# assign time trajectories to each species
+HIFa = list()
+HIFa_pOH = list()
+HIFa_aOH = list()
+HIFa_aOHpOH = list()
+HIFan_pOH = list()
+HIFan = list()
+HIFd = list()
+HIFd_HRE = list()
+HIFan_aOH = list()
+HIFan_aOHpOH = list()
+PHD = list()
+PHDn = list()
+HIFb = list()
+HRE = list()
+mRNA = list()
+protein = list()
+luciferase = list()
+
+species = [HIFa, HIFa_pOH, HIFa_aOH, HIFa_aOHpOH, HIFan_pOH, HIFan, HIFd, HIFd_HRE, HIFan_aOH, HIFan_aOHpOH, PHD, PHDn, HIFb, HRE, mRNA, protein, luciferase]
+
+for i in range(len(solution)):
+    for j in range(len(solution[0])):
+        species[j].append(solution[i][j])
+
+#fig1 = plt.figure(figsize=(10,6))
+plt.plot(t, HIFd)
+#plt.xlim(0,3600)
+#plt.ylim(-1,20)
+#print(luciferase)
+plt.grid(True)
+plt.show()
