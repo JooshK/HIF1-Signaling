@@ -228,39 +228,3 @@ def echinomycin_model(s, t, params: Params):
 def solve_model(time, model, initial_state, p):
     sol = odeint(model, initial_state, time, args=(p,))
     return sol
-
-def main():
-    HIFa = list()
-    HIFa_pOH = list()
-    HIFa_aOH = list()
-    HIFa_aOHpOH = list()
-    HIFan_pOH = list()
-    HIFan = list()
-    HIFd = list()
-    HIFd_HRE = list()
-    HIFan_aOH = list()
-    HIFan_aOHpOH = list()
-    PHD = list()
-    PHDn = list()
-    HIFb = list()
-    HRE = list()
-    mRNA = list()
-    protein = list()
-    luciferase = list()
-    echinomycin = list()
-    echinomycin_HRE = list()
-
-    s0 = [5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 170, 50, 0, 0, 0, 1, 0]
-    species = [HIFa, HIFa_pOH, HIFa_aOH, HIFa_aOHpOH, HIFan_pOH, HIFan, HIFd, HIFd_HRE, HIFan_aOH, HIFan_aOHpOH, PHD, PHDn, HIFb, HRE, mRNA, protein, luciferase, echinomycin, echinomycin_HRE]
-    time = np.linspace(0, 100, 1000)
-    p = Params()
-    solution = solve_model(time, echinomycin_model, s0, p)
-    for i in range(len(solution)):
-        for j in range(len(solution[0])):
-            species[j].append(solution[i][j])
-    plt.plot(time, HIFd_HRE)
-    plt.show()
-
-
-if __name__ == "__main__":
-    main()
