@@ -152,7 +152,7 @@ def nguyen_model(s, t, params: Params):
     """
     HIFa, HIFa_pOH, HIFa_aOH, HIFa_aOHpOH, HIFan_pOH, HIFan, HIFd, HIFd_HRE, HIFan_aOH, HIFan_aOHpOH, PHD, PHDn, HIFb, HRE, mRNA, protein, luciferase = s
     t_start = 5
-    hypo = params.hypo_3
+    hypo = params.hypo_1
     model = [
         params.v1() - params.v2(HIFa) - params.v9(HIFa) + params.v10(HIFan) - params.v3(t, t_start, hypo, PHD, HIFa) - params.v5(t, t_start, hypo, HIFa) + params.v6(HIFa_aOH),
         params.v3(t, t_start, hypo, PHD, HIFa) - params.v4(HIFa_pOH),
@@ -181,36 +181,3 @@ def solve_model(stop_time, numpoints):
 
     sol = odeint(nguyen_model, s0, t, args=(p,))
     return t, sol
-
-t, solution = solve_model(10000, 10000)
-
-# assign time trajectories to each species
-HIFa = list()
-HIFa_pOH = list()
-HIFa_aOH = list()
-HIFa_aOHpOH = list()
-HIFan_pOH = list()
-HIFan = list()
-HIFd = list()
-HIFd_HRE = list()
-HIFan_aOH = list()
-HIFan_aOHpOH = list()
-PHD = list()
-PHDn = list()
-HIFb = list()
-HRE = list()
-mRNA = list()
-protein = list()
-luciferase = list()
-
-species = [HIFa, HIFa_pOH, HIFa_aOH, HIFa_aOHpOH, HIFan_pOH, HIFan, HIFd, HIFd_HRE, HIFan_aOH, HIFan_aOHpOH, PHD, PHDn, HIFb, HRE, mRNA, protein, luciferase]
-
-for i in range(len(solution)):
-    for j in range(len(solution[0])):
-        species[j].append(solution[i][j])
-
-fig1 = plt.figure(figsize=(10,6))
-plt.plot(t, luciferase)
-plt.xlim(0,10000)
-print(luciferase)
-plt.show()
