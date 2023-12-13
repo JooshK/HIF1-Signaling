@@ -47,6 +47,10 @@ class Params:
     fih_n = 40
     vhl = 50
     vhl_n = 50
+
+    # echinomycin params
+    k_ecf = 0.55
+    k_ecr = 0.087
     
     def hypo_3_smooth(self, t, t_start):
         return 100 * (1 - 18/21 * smooth_transition(t, t_start))
@@ -155,7 +159,10 @@ class Params:
         return self.k_28*Protein
 
     def v29(self, Protein):
-        return self.k_29*Protein    
+        return self.k_29*Protein
+    
+    def ec_binding(self, echinomycin, HRE, echinomycin_HRE):
+        return self.k_ecf*echinomycin * HRE - self.k_ecr*echinomycin_HRE
 
 def nguyen_model(s, t, params: Params):
     """
@@ -185,49 +192,41 @@ def nguyen_model(s, t, params: Params):
         -params.v22(HIFd, HRE, HIFd_HRE),
         params.v23(HIFd_HRE) - params.v26(mRNA),
         params.v27(mRNA) - params.v28(protein),
-        params.v29(protein) 
+        params.v29(protein)
     ]
     return model
 
-def solve_model(stop_time, numpoints):
-    s0 = [5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 170, 50, 0, 0, 0]
-    t = np.linspace(0,stop_time,numpoints)
-    p = Params()
 
-    sol = odeint(nguyen_model, s0, t, args=(p,))
-    return t, sol
+def echinomycin_model(s, t, params: Params):
+    HIFa, HIFa_pOH, HIFa_aOH, HIFa_aOHpOH, HIFan_pOH, HIFan, HIFd, HIFd_HRE, HIFan_aOH, HIFan_aOHpOH, PHD, PHDn, HIFb, HRE, mRNA, protein, luciferase, echinomycin, echinomycin_HRE = s
+    t_start = 15
+    hypo = params.hypo_3
+    model = [
+        params.v1() - params.v2(HIFa) - params.v9(HIFa) + params.v10(HIFan) - params.v3(t, t_start, hypo, PHD, HIFa) - params.v5(t, t_start, hypo, HIFa) + params.v6(HIFa_aOH),
+        params.v3(t, t_start, hypo, PHD, HIFa) - params.v4(HIFa_pOH),
+        params.v5(t, t_start, hypo, HIFa) - params.v6(HIFa_aOH) - params.v7(t, t_start, hypo, PHD, HIFa_aOH) - params.v13(HIFa_aOH) + params.v14(HIFan_aOH),
+        params.v7(t, t_start, hypo, PHD, HIFa_aOH) - params.v8(HIFa_aOHpOH),
+        params.v15(t, t_start, hypo, PHDn, HIFan) - params.v16(HIFan_pOH),
+        params.v9(HIFa) - params.v10(HIFan) - params.v17(t, t_start, hypo, HIFan) + params.v18(HIFan_aOH)-params.v15(t, t_start, hypo, PHDn, HIFan)-params.v21(HIFan, HIFb, HIFd),
+        params.v21(HIFan, HIFb, HIFd) - params.v22(HIFd, HRE, HIFd_HRE),
+        params.v22(HIFd, HRE, HIFd_HRE),
+        params.v17(t, t_start, hypo, HIFan) - params.v18(HIFan_aOH) - params.v19(t, t_start, hypo, PHDn, HIFan_aOH),
+        params.v19(t, t_start, hypo, PHDn, HIFan_aOH) - params.v20(HIFan_aOHpOH),
+        params.v24(HIFd_HRE) - params.v25(PHD) - params.v11(PHD) + params.v12(PHDn),
+        params.v11(PHD) - params.v12(PHDn),
+        -params.v21(HIFan, HIFb, HIFd),
+        -params.v22(HIFd, HRE, HIFd_HRE) - params.ec_binding(echinomycin, HRE, echinomycin_HRE),
+        params.v23(HIFd_HRE) - params.v26(mRNA),
+        params.v27(mRNA) - params.v28(protein),
+        params.v29(protein),
+        -params.ec_binding(echinomycin, HRE, echinomycin_HRE),
+        params.ec_binding(echinomycin, HRE, echinomycin_HRE)
+    ]
+    return model
 
-t, solution = solve_model(100, 100)
 
-# assign time trajectories to each species
-HIFa = list()
-HIFa_pOH = list()
-HIFa_aOH = list()
-HIFa_aOHpOH = list()
-HIFan_pOH = list()
-HIFan = list()
-HIFd = list()
-HIFd_HRE = list()
-HIFan_aOH = list()
-HIFan_aOHpOH = list()
-PHD = list()
-PHDn = list()
-HIFb = list()
-HRE = list()
-mRNA = list()
-protein = list()
-luciferase = list()
+def solve_model(time, model, initial_state, p):
+    sol = odeint(model, initial_state, time, args=(p,))
+    return sol
 
-species = [HIFa, HIFa_pOH, HIFa_aOH, HIFa_aOHpOH, HIFan_pOH, HIFan, HIFd, HIFd_HRE, HIFan_aOH, HIFan_aOHpOH, PHD, PHDn, HIFb, HRE, mRNA, protein, luciferase]
 
-for i in range(len(solution)):
-    for j in range(len(solution[0])):
-        species[j].append(solution[i][j])
-
-#fig1 = plt.figure(figsize=(10,6))
-plt.plot(t, HIFd)
-#plt.xlim(0,3600)
-#plt.ylim(-1,20)
-#print(luciferase)
-plt.grid(True)
-plt.show()
