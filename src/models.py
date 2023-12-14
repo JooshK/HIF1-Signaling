@@ -1,7 +1,7 @@
 from scipy.integrate import odeint
 import numpy as np
 import matplotlib.pyplot as plt
-import basico
+
 
 def smooth_transition(t, t_start, steepness=0.09):
     return 1 / (1 + np.exp(-steepness * (t - t_start)))
